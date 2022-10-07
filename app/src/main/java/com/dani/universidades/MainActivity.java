@@ -1,15 +1,19 @@
 package com.dani.universidades;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Context;
+import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
@@ -19,23 +23,34 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.sql.Array;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
-    TextView uniRes,webRes;
+   // TextView uniRes,webRes;
+    Context context;
     Button boton;
     EditText pais,uni;
     String country,name;
+    List<Universidad> lista;
+    JSONArray jsonArray;
+    JSONObject jsonObject;
+    com.dani.universidades.Request request ;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         pais=findViewById(R.id.pais);
         uni=findViewById(R.id.uni);
-        uniRes=findViewById(R.id.uniRes);
-        webRes=findViewById(R.id.webRes);
         boton = (Button) findViewById(R.id.boton);
+
+        context = this.getApplicationContext();
         boton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -43,51 +58,26 @@ public class MainActivity extends AppCompatActivity {
                 country = String.valueOf(pais.getText());
                 name = String.valueOf(uni.getText());
 
-                LeerApi(country,name);
+
+                new CountDownTimer(800, 800){
+                    @Override
+                    public void onTick(long l) {
+                        try {
+                           request = Request.getInstance(country,name,context);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    @RequiresApi(api = Build.VERSION_CODES.O)
+                    public  void onFinish(){
+                         lista=request.getJsonArray();
+
+                        for (Universidad u:lista) {
+                            Log.i("MAIN", u.getWebPage());
+                        }
+                    }
+                }.start();
             }
         });
-    }
-
-    private void LeerApi(String country, String name) {
-
-
-
-
-       // String url = "https://jsonplaceholder.typicode.com/posts/11";
-        String url = "http://universities.hipolabs.com/search?country="+ country+"&name="+name+"";
-
-        StringRequest postRequest = new StringRequest(Request.Method.GET, url, new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-
-                try {
-
-                    JSONArray jsonArray = new JSONArray(response);
-                    JSONObject jsonObject = new JSONObject(jsonArray.getString(0));
-                    System.out.println(jsonObject);
-                    System.out.println(jsonObject.getString("name"));
-                    System.out.println(jsonObject.getString("country"));
-                    System.out.println(jsonObject.getString("web_pages"));
-                    String [] a= {jsonObject.getString("web_pages")};
-                    String webUrl= a[0].replace("]","").replace("[","") .replace("\\","").replace("\"","");
-                    System.out.println(webUrl);
-                    String nom= jsonObject.getString("name");
-                    uniRes.setText(nom);
-                    webRes.setText(webUrl);
-
-
-                } catch (JSONException e) {
-                    System.out.println("NO HAY RESULTADOS!!!!!!!");
-                   //e.printStackTrace();
-                }
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-             //   System.out.println("NO HAY RESULTADOS!!!!!!!");
-                Log.e("Error", error.getMessage());
-            }
-        });
-        Volley.newRequestQueue(this).add(postRequest);
     }
 }
