@@ -26,62 +26,60 @@ public class Request {
     private List<Universidad> lista;
     private static String url;
     private final Request request =this;
+    private Context context;
 
-    public static Request getInstance(String country, String name, Context context) throws IOException {
+    public static Request getInstance(Context context) throws IOException {
 
         if (instancia == null) {
-            instancia = new Request(country,name,context);
-
+            instancia = new Request(context);
         }
         return instancia;
     }
 
-    public List<Universidad> getJsonArray(){
+    private Request(Context context){
+        this.context=context;
+    }
 
-        lista= new ArrayList<Universidad>(){};
-
-        for (int i = 0; i <jsonArray.length() ; i++) {
-            try {
-                jsonObject = new JSONObject(jsonArray.getString(i));
-                Universidad universidad = new Universidad();
-                universidad.setCountry(jsonObject.getString("country"));
-                universidad.setName(jsonObject.getString("name"));
-                universidad.setCodPais(jsonObject.getString("alpha_two_code"));
-                String[] webArray= {jsonObject.getString("web_pages")};
-                String webUrl= webArray[0].replace("]","").replace("[","") .replace("\\","").replace("\"","");
-                universidad.setWebPage(webUrl);
-
-                lista.add(universidad);
-
-           //     Log.i("NOMBRE R",universidad.getName());
-             //   Log.i("WEB R",universidad.getWebPage());
-
-
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
+    public List<Universidad> getListaUniversidades(){
 
         return lista;
     }
 
 
-    private Request(String country,String name, Context context) throws IOException {
+    public void nuevaBusqueda(String country,String name) throws IOException {
 
         url= "http://universities.hipolabs.com/search?country="+ country+"&name="+name+"";
 
-         StringRequest postRequest =  new StringRequest(com.android.volley.Request.Method.GET, url,new Response.Listener<String>() {
+        StringRequest postRequest =  new StringRequest(com.android.volley.Request.Method.GET, url,new Response.Listener<String>() {
 
-                    @Override
-                    public void onResponse(String response) {
+            @Override
+            public void onResponse(String response) {
+
+                    lista= new ArrayList<Universidad>(){};
+                try {
+                    jsonArray = new JSONArray(response);
+                    for (int i = 0; i <jsonArray.length() ; i++) {
                         try {
-                            jsonArray = new JSONArray(response);
+                            jsonObject = new JSONObject(jsonArray.getString(i));
+                            Universidad universidad = new Universidad();
+                            universidad.setCountry(jsonObject.getString("country"));
+                            universidad.setName(jsonObject.getString("name"));
+                            universidad.setCodPais(jsonObject.getString("alpha_two_code"));
+                            String[] webArray= {jsonObject.getString("web_pages")};
+                            String webUrl= webArray[0].replace("]","").replace("[","") .replace("\\","").replace("\"","");
+                            universidad.setWebPage(webUrl);
+                            lista.add(universidad);
 
                         } catch (JSONException e) {
-                            Log.e("Error", e.getMessage());
+                            e.printStackTrace();
                         }
                     }
-                },
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        },
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
@@ -89,6 +87,7 @@ public class Request {
                     }
                 });
         Volley.newRequestQueue(context).add(postRequest);
+
     }
 
 }

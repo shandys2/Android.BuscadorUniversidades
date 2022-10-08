@@ -6,6 +6,7 @@ public class Universidad {
     private String webPage;
     private String name;
     private String codPais;
+    private String msg;
 
     public Universidad(String country, String webPage, String name, String codPais) {
         this.country = country;
@@ -17,7 +18,9 @@ public class Universidad {
     public Universidad() {
 
     }
-
+    public Universidad(String msg) {
+      this.name=msg;
+    }
     public String getCountry() {
         return country;
     }
